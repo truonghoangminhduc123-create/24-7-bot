@@ -24,7 +24,6 @@ let botStatus = {
 // ========================================================
 // 2. WEB SERVER ĐỘC LẬP - GIỮ ALIVE TRÊN RENDER 100%
 // ========================================================
-// Web server chạy hoàn toàn biệt lập, không dính dáng tới lỗi của bot
 http.createServer((req, res) => {
     try {
         res.writeHead(200, { 'Content-Type': 'text/html; charset=utf-8' });
@@ -77,7 +76,7 @@ const botArgs = {
     host: 'minhducz.play.hosting', 
     port: 25565,                  
     username: 'dot', 
-    version: '1.21.11', 
+    version: '1.21.1', 
     checkTimeoutInterval: 120000 // Tăng lên 2 phút để tránh rớt mạng ảo trên Cloud
 };
 
@@ -94,6 +93,18 @@ function createBot() {
     try {
         const bot = mineflayer.createBot(botArgs);
         botInstance = bot;
+
+        // ========================================================
+        // TỰ ĐỘNG KHỚP VÀ CHẤP NHẬN RESOURCE PACK (SỬA LỖI KHÔNG VÀO ĐƯỢC MÁY CHỦ)
+        // ========================================================
+        bot.on('resourcePack', (url, hash) => {
+            try {
+                if (botInstance && typeof botInstance.acceptResourcePack === 'function') {
+                    // Gửi gói tin xác nhận đồng ý tải pack lên server
+                    botInstance.acceptResourcePack();
+                }
+            } catch (err) {}
+        });
 
         // XỬ LÝ ĐĂNG NHẬP AN TOÀN
         bot.on('messagestr', (message) => {
