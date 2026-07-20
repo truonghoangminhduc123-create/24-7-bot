@@ -76,7 +76,7 @@ const botArgs = {
     host: 'minhducz.play.hosting', 
     port: 25565,                  
     username: 'dot', 
-    version: '1.21.1', 
+    version: '1.21.11', 
     checkTimeoutInterval: 120000 // Tăng lên 2 phút để tránh rớt mạng ảo trên Cloud
 };
 
