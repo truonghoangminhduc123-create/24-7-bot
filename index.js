@@ -5,7 +5,7 @@ const http = require('http');
 // 1. CHỐNG CRASH TUYỆT ĐỐI Ở TẦNG CORE (BẮT TẤT CẢ LỖI NGẦM)
 // ========================================================
 process.on('uncaughtException', (err) => {
-    // Không làm gì cả, nuốt lỗi để Node.js không bao giờ bị sập
+    // Nuốt lỗi ngầm để Node.js không bao giờ sập
 });
 process.on('unhandledRejection', (reason, promise) => {
     // Cô lập hoàn toàn lỗi bất đồng bộ
@@ -70,14 +70,14 @@ http.createServer((req, res) => {
 }).listen(process.env.PORT || 3000);
 
 // ========================================================
-// 3. CẤU HÌNH CORE BOT (ANTI-LAG & ANTI-TIMEOUT)
+// 3. CẤU HÌNH CORE BOT (ANTI-LAG & CHỐNG TIMEOUT 1.21.11)
 // ========================================================
 const botArgs = {
     host: 'minhducz.play.hosting', 
     port: 25565,                  
     username: 'dot', 
-    version: '1.21.11', 
-    checkTimeoutInterval: 120000 // Tăng lên 2 phút để tránh rớt mạng ảo trên Cloud
+    version: '1.21.11',          
+    checkTimeoutInterval: 180000 
 };
 
 const PASSWORD = 'DucMinh2026@'; 
@@ -87,7 +87,6 @@ let updateInterval = null;
 let reconnectTimeout = null;
 
 function createBot() {
-    // Khóa chống trùng luồng bot (Tránh tạo 2 con bot cùng lúc gây crash)
     if (botInstance) return;
 
     try {
@@ -95,12 +94,11 @@ function createBot() {
         botInstance = bot;
 
         // ========================================================
-        // TỰ ĐỘNG KHỚP VÀ CHẤP NHẬN RESOURCE PACK (SỬA LỖI KHÔNG VÀO ĐƯỢC MÁY CHỦ)
+        // 🚀 BYPASS RESOURCE PACK: TỰ ĐỘNG CHẤP NHẬN NGAY LẬP TỨC
         // ========================================================
         bot.on('resourcePack', (url, hash) => {
             try {
                 if (botInstance && typeof botInstance.acceptResourcePack === 'function') {
-                    // Gửi gói tin xác nhận đồng ý tải pack lên server
                     botInstance.acceptResourcePack();
                 }
             } catch (err) {}
@@ -128,7 +126,7 @@ function createBot() {
                 
                 startRandomMovement(bot);
 
-                // VÒNG LẶP CẬP NHẬT DỮ LIỆU SẠCH (CHỐNG TRÀN BỘ NHỚ)
+                // VÒNG LẶP CẬP NHẬT DỮ LIỆU SẠCH
                 if (updateInterval) clearInterval(updateInterval);
                 updateInterval = setInterval(() => {
                     try {
@@ -163,7 +161,7 @@ function createBot() {
             } catch (spawnErr) {}
         });
 
-        // 💀 TỰ ĐỘNG HỒI SINH SAU ĐÚNG 1 GIÂY (CHỐNG KẸT LUỒNG CHẾT)
+        // 💀 TỰ ĐỘNG HỒI SINH SAU ĐÚNG 1 GIÂY
         bot.on('death', () => {
             setTimeout(() => { 
                 try {
@@ -174,17 +172,17 @@ function createBot() {
             }, 1000);
         });
 
-        // ⏱️ CHỜ ĐÚNG 3 GIÂY ĐỂ SERVER THỰC HIỆN XONG QUY TRÌNH KICK/FREEZE RỒI MỚI JOIN LẠI
-        bot.on('kicked', () => { triggerReconnect(3000); });
-        bot.on('end', () => { triggerReconnect(3000); });
-        bot.on('error', () => { triggerReconnect(3000); });
+        // ⏱️ KICK / NGẮT KẾT NỐI -> CHỜ ĐÚNG 2 GIÂY LÀ TỰ ĐỘNG VÀO LẠI
+        bot.on('kicked', () => { triggerReconnect(2000); });
+        bot.on('end', () => { triggerReconnect(2000); });
+        bot.on('error', () => { triggerReconnect(2000); });
 
     } catch (e) {
-        triggerReconnect(3000);
+        triggerReconnect(2000);
     }
 }
 
-// HÀM ĐIỀU HƯỚNG KẾT NỐI LẠI TẬP TRUNG (BẤT KHẢ THI BỊ TRÙNG LUỒNG)
+// HÀM ĐIỀU HƯỚNG KẾT NỐI LẠI TẬP TRUNG (CHỜ 2S)
 function triggerReconnect(delay) {
     cleanUp();
     if (!reconnectTimeout) {
@@ -195,7 +193,7 @@ function triggerReconnect(delay) {
     }
 }
 
-// DỌN DẸP BỘ NHỚ ĐỆM CHỐNG RÒ RỈ TÀI NGUYÊN (MEMORY LEAK)
+// DỌN DẸP BỘ NHỚ ĐỆM CHỐNG RÒ RỈ TÀI NGUYÊN
 function cleanUp() {
     try { if (movementTimeout) clearTimeout(movementTimeout); } catch(e) {}
     try { if (updateInterval) clearInterval(updateInterval); } catch(e) {}
@@ -207,12 +205,12 @@ function cleanUp() {
         try { botInstance.quit(); } catch(e) {}
         botInstance = null;
     }
-    botStatus.connected = "🔴 Đang đóng băng mạng / Tự động kết nối lại sau 3s...";
+    botStatus.connected = "🔴 Đang ngắt kết nối / Tự động kết nối lại sau 2s...";
     botStatus.gameMode = "Không rõ";
     botStatus.nearbyPlayers = [];
 }
 
-// DI CHUYỂN NGẪU NHIÊN GIỮ CHUNK (BỌC TRY-CATCH TOÀN DIỆN)
+// DI CHUYỂN NGẪU NHIÊN GIỮ CHUNK
 function startRandomMovement(bot) {
     if (!bot || !bot.entity || !botInstance) return;
     try {
