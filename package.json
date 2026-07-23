@@ -1,14 +1,15 @@
 {
-  "name": "render-mc-bot",
+  "name": "24-7-bot",
   "version": "1.0.0",
   "main": "index.js",
+  "type": "commonjs",
+  "engines": {
+    "node": ">=18"
+  },
   "scripts": {
     "start": "node index.js"
   },
   "dependencies": {
-    "mineflayer": "^4.28.0"
-  },
-  "engines": {
-    "node": ">=18.0.0"
+    "mineflayer": "^4.27.0"
   }
 }
