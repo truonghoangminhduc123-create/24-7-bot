@@ -1,7 +1,7 @@
 const mineflayer = require('mineflayer');
 const express = require('express');
 
-// --- 1. KHỞI TẠO WEB SERVER (Để Render không bị Kill & UptimeRobot Ping) ---
+// --- 1. WEB SERVER DÙNG CHO UPTIMEROBOT & RENDER ---
 const app = express();
 const PORT = process.env.PORT || 3000;
 
@@ -13,7 +13,7 @@ app.get('/', (req, res) => {
     <!DOCTYPE html>
     <html>
       <head>
-        <title>AFK Bot Status</title>
+        <title>Bot dot Status</title>
         <meta charset="utf-8">
         <style>
           body { font-family: Arial, sans-serif; background: #121212; color: #fff; text-align: center; padding: 50px; }
@@ -23,7 +23,7 @@ app.get('/', (req, res) => {
       </head>
       <body>
         <div class="card">
-          <h2>🤖 Minecraft AFK Bot Dashboard</h2>
+          <h2>🤖 Bot "dot" AFK Dashboard</h2>
           <p>Trạng thái: <span class="status">${botStatus}</span></p>
           <p>Lần cập nhật cuối: <strong>${lastOnline}</strong></p>
         </div>
@@ -36,13 +36,12 @@ app.listen(PORT, () => {
   console.log(`[Web Server] Đang chạy tại port ${PORT}`);
 });
 
-// --- 2. CẤU HÌNH BOT MINEFLAYER ---
+// --- 2. CẤU HÌNH BOT "dot" ---
 const BOT_CONFIG = {
-  host: 'minhducz.play.hosting', // IP/Domain server của Đức
-  port: 25565,                   // Port server (thay nếu có port riêng)
-  username: 'AFK_Bot_Duc',        // Tên bot trong game
-  // password: 'DucMinh2026@',   // Nếu là server Premium (Online-mode) thì mở comment dòng này
-  version: '1.21.1'              // Khuyên dùng 1.21.1 để kết nối ổn định tới 1.21.11
+  host: 'minhducz.play.hosting', // IP Server của Đức
+  port: 25565,                   // Port server
+  username: 'dot',               // Tên bot
+  version: '1.21.11'             // Set đúng version 1.21.11
 };
 
 function createBot() {
@@ -51,34 +50,43 @@ function createBot() {
 
   const bot = mineflayer.createBot(BOT_CONFIG);
 
-  // Tự động Chấp nhận Resource Pack từ Server gửi xuống
-  bot.on('resourcePack', (url, hash) => {
-    console.log('[Bot] Đã nhận Resource Pack từ Server -> Đang tự động Accept!');
+  // 1. Tự động Chấp nhận Resource Pack
+  bot.on('resourcePack', () => {
+    console.log('[Bot] Đã nhận Resource Pack -> Tự động Accept!');
     bot.acceptResourcePack();
   });
 
-  // Khi bot vào game thành công
+  // 2. Khi vào game thành công & Xử lý AuthMe
   bot.on('spawn', () => {
-    console.log('[Bot] Đã vào game thành công!');
+    console.log('[Bot dot] Đã vào game thành công!');
     botStatus = '🟢 Đang Online trong Server';
     lastOnline = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-    // Chat thông báo hoặc đăng nhập (nếu server xài AuthMe)
+    // Đợi 2 giây sau khi spawn rồi mới gửi lệnh login/register
     setTimeout(() => {
-      // Nếu server offline-mode có AuthMe, bỏ comment dòng dưới:
-      // bot.chat('/login DucMinh2026@'); 
-      bot.chat('Bot AFK 24/7 đã kết nối!');
-    }, 3000);
+      // Đăng nhập nếu đã có tài khoản
+      bot.chat('/login DucMinh2026@');
+      // Thử đăng ký luôn nếu là lần đầu con bot "dot" vào server
+      bot.chat('/register DucMinh2026@ DucMinh2026@');
+    }, 2000);
   });
 
-  // Xử lý khi bị ngắt kết nối (Auto Reconnect)
+  // 3. AUTO RESPAWN (Tự động hồi sinh khi chết)
+  bot.on('death', () => {
+    console.log('[Bot dot] Đã bị ngỏm -> Đang tự động hồi sinh (Respawn)...');
+    botStatus = '🟡 Đang tự động hồi sinh...';
+  });
+
+  // 4. AUTO REJOIN (Kết nối lại sau 10s khi bị Kick/Disconnect/Limbo)
   bot.on('end', (reason) => {
-    console.log(`[Bot] Mất kết nối: ${reason}. Đang thử kết nối lại sau 10 giây...`);
-    botStatus = `🔴 Mất kết nối (${reason})`;
+    console.log(`[Bot dot] Mất kết nối: ${reason}. Đang đợi 10 giây để kết nối lại...`);
+    botStatus = `🔴 Mất kết nối (${reason}) - Đang chờ 10s...`;
+    
+    // Đợi đúng 10000ms (10 giây) rồi gọi lại hàm createBot
     setTimeout(createBot, 10000);
   });
 
-  // Xử lý lỗi
+  // 5. Xử lý lỗi hệ thống
   bot.on('error', (err) => {
     console.error('[Bot Error]:', err.message);
     botStatus = `⚠️ Lỗi: ${err.message}`;
