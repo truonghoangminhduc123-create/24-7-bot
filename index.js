@@ -56,18 +56,26 @@ function createBot() {
     bot.acceptResourcePack();
   });
 
-  // 2. Khi vào game thành công & Xử lý AuthMe
+  // 2. Khi vào game thành công & Xử lý AuthMe + Chống GrimAC Timeout
   bot.on('spawn', () => {
     console.log('[Bot dot] Đã vào game thành công!');
     botStatus = '🟢 Đang Online trong Server';
     lastOnline = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-    // Đợi 2 giây sau khi spawn rồi mới gửi lệnh login/register
+    // Tự động Login / Register AuthMe sau 2 giây
     setTimeout(() => {
-      // Đăng nhập nếu đã có tài khoản
       bot.chat('/login DucMinh2026@');
-      // Thử đăng ký luôn nếu là lần đầu con bot "dot" vào server
       bot.chat('/register DucMinh2026@ DucMinh2026@');
+    }, 2000);
+
+    // Chống GrimAC kick (Lắc đầu nhẹ mỗi 2 giây để gửi Packet Ticks liên tục)
+    if (bot.grimInterval) clearInterval(bot.grimInterval);
+    bot.grimInterval = setInterval(() => {
+      if (bot && bot.entity) {
+        const yaw = bot.entity.yaw + 0.1;
+        const pitch = bot.entity.pitch;
+        bot.look(yaw, pitch, true);
+      }
     }, 2000);
   });
 
@@ -75,6 +83,12 @@ function createBot() {
   bot.on('death', () => {
     console.log('[Bot dot] Đã bị ngỏm -> Đang tự động hồi sinh (Respawn)...');
     botStatus = '🟡 Đang tự động hồi sinh...';
+    // Mineflayer tự hỗ trợ respawn mặc định nhưng ta có thể gọi lệnh dự phòng nếu cần
+    setTimeout(() => {
+      try {
+        bot.respawn();
+      } catch (e) {}
+    }, 1000);
   });
 
   // 4. AUTO REJOIN (Kết nối lại sau 10s khi bị Kick/Disconnect/Limbo)
@@ -82,7 +96,10 @@ function createBot() {
     console.log(`[Bot dot] Mất kết nối: ${reason}. Đang đợi 10 giây để kết nối lại...`);
     botStatus = `🔴 Mất kết nối (${reason}) - Đang chờ 10s...`;
     
-    // Đợi đúng 10000ms (10 giây) rồi gọi lại hàm createBot
+    // Xóa interval chống lag khi mất kết nối
+    if (bot.grimInterval) clearInterval(bot.grimInterval);
+
+    // Đợi đúng 10 giây (10000ms) rồi gọi lại hàm createBot
     setTimeout(createBot, 10000);
   });
 
