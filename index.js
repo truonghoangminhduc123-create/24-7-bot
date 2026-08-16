@@ -41,7 +41,7 @@ const BOT_CONFIG = {
   host: 'minhducz.play.hosting', // IP Server của Đức
   port: 25565,                   // Port server
   username: 'dot',               // Tên bot
-  version: '1.21.11'             // Set đúng version 1.21.11
+  version: '26.1'             // Set đúng version 1.21.11
 };
 
 function createBot() {
