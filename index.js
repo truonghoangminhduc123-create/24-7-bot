@@ -41,7 +41,7 @@ const BOT_CONFIG = {
   host: 'minhducz.play.hosting', // IP Server của Đức
   port: 25565,                   // Port server
   username: 'dot',               // Tên bot
-  version: '1.21.11',             // FIX: Bản protocol chuẩn để tránh lỗi ProtocolMismatch/Netty socket (Server 1.20+ / ViaVersion đều nhận)
+  version: '26.2',             // FIX: Bản protocol chuẩn để tránh lỗi ProtocolMismatch/Netty socket (Server 1.20+ / ViaVersion đều nhận)
   checkTimeoutInterval: 60 * 1000, // FIX: Tăng thời gian chờ Handshake/Packet tránh lỗi Netty "void future"
   physicsEnabled: false,          // FIX: Tắt mô phỏng vật lý giúp tiết kiệm RAM/CPU và giảm lag mạng
   viewDistance: 'tiny'           // FIX: Giảm tải nạp chunk không cần thiết
