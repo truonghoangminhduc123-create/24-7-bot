@@ -3,7 +3,7 @@ const express = require('express');
 
 // --- 1. WEB SERVER DÙNG CHO UPTIMEROBOT & RENDER ---
 const app = express();
-const PORT = process.env.PORT || 3000;
+const PORT = process.env.PORT || 8080;
 
 let botStatus = 'Đang khởi động...';
 let lastOnline = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
