@@ -41,7 +41,10 @@ const BOT_CONFIG = {
   host: 'minhducz.play.hosting', // IP Server của Đức
   port: 25565,                   // Port server
   username: 'dot',               // Tên bot
-  version: '26.1'             // Set đúng version 1.21.11
+  version: '1.21.11',             // FIX: Bản protocol chuẩn để tránh lỗi ProtocolMismatch/Netty socket (Server 1.20+ / ViaVersion đều nhận)
+  checkTimeoutInterval: 60 * 1000, // FIX: Tăng thời gian chờ Handshake/Packet tránh lỗi Netty "void future"
+  physicsEnabled: false,          // FIX: Tắt mô phỏng vật lý giúp tiết kiệm RAM/CPU và giảm lag mạng
+  viewDistance: 'tiny'           // FIX: Giảm tải nạp chunk không cần thiết
 };
 
 function createBot() {
@@ -62,28 +65,29 @@ function createBot() {
     botStatus = '🟢 Đang Online trong Server';
     lastOnline = new Date().toLocaleString('vi-VN', { timeZone: 'Asia/Ho_Chi_Minh' });
 
-    // Tự động Login / Register AuthMe sau 2 giây
+    // FIX: Tự động Login / Register AuthMe sau 3 giây khi entity đã sẵn sàng
     setTimeout(() => {
-      bot.chat('/login DucMinh2026@');
-      bot.chat('/register DucMinh2026@ DucMinh2026@');
-    }, 2000);
+      if (bot && bot.entity) {
+        bot.chat('/login DucMinh2026@');
+        bot.chat('/register DucMinh2026@ DucMinh2026@');
+      }
+    }, 3000);
 
-    // Chống GrimAC kick (Lắc đầu nhẹ mỗi 2 giây để gửi Packet Ticks liên tục)
+    // Chống GrimAC / AFK kick (Lắc đầu nhẹ mỗi 3 giây gửi Packet Ticks)
     if (bot.grimInterval) clearInterval(bot.grimInterval);
     bot.grimInterval = setInterval(() => {
       if (bot && bot.entity) {
-        const yaw = bot.entity.yaw + 0.1;
+        const yaw = bot.entity.yaw + 0.05;
         const pitch = bot.entity.pitch;
         bot.look(yaw, pitch, true);
       }
-    }, 2000);
+    }, 3000);
   });
 
   // 3. AUTO RESPAWN (Tự động hồi sinh khi chết)
   bot.on('death', () => {
     console.log('[Bot dot] Đã bị ngỏm -> Đang tự động hồi sinh (Respawn)...');
     botStatus = '🟡 Đang tự động hồi sinh...';
-    // Mineflayer tự hỗ trợ respawn mặc định nhưng ta có thể gọi lệnh dự phòng nếu cần
     setTimeout(() => {
       try {
         bot.respawn();
@@ -91,19 +95,19 @@ function createBot() {
     }, 1000);
   });
 
-  // 4. AUTO REJOIN (Kết nối lại sau 10s khi bị Kick/Disconnect/Limbo)
+  // 4. AUTO REJOIN (Kết nối lại sau 15s khi bị Kick/Disconnect/Limbo)
   bot.on('end', (reason) => {
-    console.log(`[Bot dot] Mất kết nối: ${reason}. Đang đợi 10 giây để kết nối lại...`);
-    botStatus = `🔴 Mất kết nối (${reason}) - Đang chờ 10s...`;
+    console.log(`[Bot dot] Mất kết nối: ${reason}. Đang đợi 15 giây để kết nối lại...`);
+    botStatus = `🔴 Mất kết nối (${reason}) - Đang chờ 15s...`;
     
     // Xóa interval chống lag khi mất kết nối
     if (bot.grimInterval) clearInterval(bot.grimInterval);
 
-    // Đợi đúng 10 giây (10000ms) rồi gọi lại hàm createBot
-    setTimeout(createBot, 10000);
+    // FIX: Tăng thời gian Rejoin lên 15 giây để tránh bị Firewall/ProtocolLib chặn do Spam Join liên tục
+    setTimeout(createBot, 15000);
   });
 
-  // 5. Xử lý lỗi hệ thống
+  // 5. Xử lý lỗi hệ thống & Tránh crash app
   bot.on('error', (err) => {
     console.error('[Bot Error]:', err.message);
     botStatus = `⚠️ Lỗi: ${err.message}`;
