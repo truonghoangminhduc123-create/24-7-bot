@@ -38,7 +38,7 @@ app.listen(PORT, () => {
 
 // --- 2. CẤU HÌNH BOT "dot" ---
 const BOT_CONFIG = {
-  host: 'minhducz.seedloaf.gg', // IP Server của Đức
+  host: 'minhducz.gimzonodes.space', // IP Server của Đức
   port: 25565,                   // Port server
   username: 'dot',               // Tên bot
   version: '1.21.11',             // FIX: Bản protocol chuẩn để tránh lỗi ProtocolMismatch/Netty socket (Server 1.20+ / ViaVersion đều nhận)
